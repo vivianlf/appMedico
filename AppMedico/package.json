@@ -1,0 +1,14 @@
+{
+  "name": "AppMedico",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "node node_modules/react-native/local-cli/cli.js start"
+  },
+  "dependencies": {
+    "expo": "^51.0.38",
+    "react-native": "0.75.4",
+    "typescript": "~5.3.3",
+    "@types/react": "~18.2.79"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "target": "esnext",        // Define o nível de ECMAScript alvo (ES6+ geralmente é uma boa escolha).
+    "module": "esnext",        // Define o sistema de módulos.
+    "jsx": "react",            // Necessário para o JSX funcionar corretamente no React.
+    "strict": true,            // Ativa a verificação estrita do TypeScript.
+    "esModuleInterop": true,   // Permite compatibilidade com importações de CommonJS.
+    "skipLibCheck": true,      // Pula verificação de bibliotecas para acelerar a compilação.
+    "forceConsistentCasingInFileNames": true,  // Garante que nomes de arquivos tenham a mesma caixa de caracteres.
+    "types": ["react", "react-dom", "prop-types"] // Inclui os tipos necessários.
+  },
+  "include": ["**/*.ts", "**/*.tsx"],  // Inclui todos os arquivos .ts e .tsx no projeto.
+  "exclude": ["node_modules"]          // Exclui a pasta node_modules.
+}
