@@ -1,3 +1,9 @@
+import { PrismaClient } from '@prisma/client';
+
+
+// Instância do Prisma Client
+const prisma = new PrismaClient();
+
 class Usuario {
   nomeCompleto: string;
   cpf: string;

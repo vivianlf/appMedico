@@ -1,0 +1,236 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id            Int            @id @default(autoincrement())
+  nomeCompleto  String
+  cpf           String         @unique
+  email         String         @unique
+  senha         String
+  whatsapp      String
+  administrador Boolean
+  paciente      Paciente? // Relacionamento 1:1 com Paciente (Paciente estende Usuario)
+  recepcionista Recepcionista?
+  medico        Medico?
+}
+
+model Paciente {
+  id                 Int                  @id @default(autoincrement())
+  usuarioId          Int                  @unique
+  usuario            Usuario              @relation(fields: [usuarioId], references: [id])
+  preConsultas       PreConsulta[] // Um paciente pode ter várias pré-consultas
+  exames             Exame[] // Um paciente pode realizar vários exames
+  prescricoes        Prescricao[] // Um paciente pode acessar várias prescrições
+  habitosAlimentares HabitosAlimentares[] // Um paciente pode ter vários hábitos alimentares
+  sono               Sono[] // Um paciente pode ter vários registros de sono
+  atividadeFisica    AtividadeFisica[] // Um paciente pode ter várias atividades físicas
+  saudeFisicaMental  SaudeFisicaMental[] // Um paciente pode ter vários registros de saúde física e mental
+  exameFisico        ExameFisico[] // Relacionamento com ExameFisico
+}
+
+model Sono {
+  id             Int      @id @default(autoincrement()) // ID auto-incremental
+  qualidadeSono  String // Qualidade do sono
+  horarioSono    String // Horário do sono
+  inducaoSono    String // Tempo de indução ao sono
+  manutencaoSono String // Manutenção do sono
+  despertarSono  String // Qualidade do despertar
+  dormeBem       Boolean // Indica se o paciente dorme bem
+  pacienteId     Int // Chave estrangeira para o paciente
+  paciente       Paciente @relation(fields: [pacienteId], references: [id]) // Relacionamento com Paciente
+}
+
+model SaudeFisicaMental {
+  id         Int      @id @default(autoincrement()) // ID auto-incremental
+  libido     String // Nível de libido do paciente
+  disposicao String // Nível de disposição do paciente
+  ansioso    Boolean // Indica se o paciente está ansioso
+  energia    String // Nível de energia do paciente
+  pacienteId Int // Chave estrangeira para o paciente
+  paciente   Paciente @relation(fields: [pacienteId], references: [id]) // Relacionamento com Paciente
+}
+
+enum ObjetivoLembrete {
+  CONSULTA
+  EXAME
+  PRESCRICAO
+}
+
+enum TipoConsulta {
+  ANAMNESE
+  PRE_CONSULTA
+}
+
+model PreConsulta {
+  id                    Int      @id @default(autoincrement()) // ID auto-incremental
+  historicoDoencas      String // Histórico de doenças do paciente
+  medicacoesUsoContinuo String // Medicações de uso contínuo
+  alergia               String // Informações sobre alergia
+  queixaDuracao         String // Duração das queixas
+  usoPrevioEAA          Boolean // Indica se houve uso prévio de EAA (esteróides anabolizantes androgênicos)
+  limitadores           String // Limitações ou fatores limitantes do paciente
+  historicoConvulsao    Boolean // Histórico de convulsões
+  historicoGlaucoma     Boolean // Histórico de glaucoma
+  historicoNefrolitiase Boolean // Histórico de nefrolitíase (cálculo renal)
+  pesoAlmejado          Float // Peso desejado pelo paciente
+  pacienteId            Int // Chave estrangeira para o paciente
+  paciente              Paciente @relation(fields: [pacienteId], references: [id]) // Relacionamento com o paciente
+}
+
+model Exame {
+  id          Int        @id @default(autoincrement())
+  resultado   String
+  orientacao  String
+  tipoExame   TipoExame? @relation(fields: [tipoExameId], references: [id])
+  tipoExameId Int
+  paciente    Paciente?  @relation(fields: [pacienteId], references: [id])
+  pacienteId  Int?
+  medico      Medico?    @relation(fields: [medicoId], references: [id])
+  medicoId    Int
+  lembrete    Lembrete?  @relation(fields: [lembreteId], references: [id])
+  lembreteId  Int?       @unique
+}
+
+model TipoExame {
+  id     Int     @id @default(autoincrement())
+  nome   String
+  exames Exame[] // Relacionamento com Exame
+}
+
+model Recepcionista {
+  id        Int        @id @default(autoincrement())
+  usuarioId Int        @unique
+  usuario   Usuario    @relation(fields: [usuarioId], references: [id])
+  consultas Consulta[] // Relacionamento: A recepcionista pode agendar várias consultas
+}
+
+model Prescricao {
+  id            Int         @id @default(autoincrement()) // ID auto-incremental
+  dosagem       String // Dosagem do medicamento
+  orientacao    String // Orientações sobre o uso do medicamento
+  medicamentoId Int
+  medicamento   Medicamento @relation(fields: [medicamentoId], references: [id]) // Relacionamento com Medicamento
+  paciente      Paciente    @relation(fields: [pacienteId], references: [id]) // Relacionamento com Paciente
+  pacienteId    Int
+  medico        Medico      @relation(fields: [medicoId], references: [id]) // Relacionamento com Medico
+  medicoId      Int
+  lembretes     Lembrete[]
+}
+
+model Medico {
+  id          Int          @id @default(autoincrement()) // ID auto-incremental
+  crm         String // CRM do médico
+  usuarioId   Int          @unique // ID do Usuário (relacionamento com Usuario)
+  usuario     Usuario      @relation(fields: [usuarioId], references: [id]) // Relacionamento com Usuario
+  consultas   Consulta[] // Relacionamento: Um médico pode realizar várias consultas
+  exames      Exame[] // Relacionamento: Um médico pode prescrever vários exames
+  prescricoes Prescricao[] // Relacionamento: Um médico pode fazer várias prescrições
+}
+
+model Medicamento {
+  id                Int               @id @default(autoincrement()) // ID auto-incremental
+  nome              String // Nome do medicamento
+  resumo            String // Resumo do medicamento
+  efeitosColaterais EfeitoColateral[] // Relacionamento: Um medicamento pode ter vários efeitos colaterais
+  prescricao        Prescricao[]
+}
+
+model Lembrete {
+  id           Int              @id @default(autoincrement()) // ID auto-incremental
+  objetivo     ObjetivoLembrete // Enum para o objetivo do lembrete
+  tipo         String // Tipo do lembrete (ex: 'aviso', 'alerta')
+  mensagem     String // Mensagem do lembrete
+  consultaId   Int? // Chave estrangeira opcional para Consulta
+  exameId      Int? // Chave estrangeira opcional para Exame
+  prescricaoId Int? // Chave estrangeira opcional para Prescricao
+  consulta     Consulta?        @relation(fields: [consultaId], references: [id]) // Relacionamento opcional com Consulta
+  exame        Exame?
+  prescricao   Prescricao?      @relation(fields: [prescricaoId], references: [id]) // Relacionamento opcional com Prescricao
+}
+
+model HabitosAlimentares {
+  id                 Int      @id @default(autoincrement()) // ID auto-incremental
+  compulsaoAlimentar Boolean // Indica se o paciente tem compulsão alimentar
+  gostaDocesAlcool   Boolean // Indica se o paciente gosta de doces ou álcool
+  fomeNoturna        Boolean // Indica se o paciente tem fome noturna
+  fomeEmocional      Boolean // Indica se o paciente tem fome emocional
+  habitoBeliscador   Boolean // Indica se o paciente tem o hábito de "beliscar"
+  pacienteId         Int // Chave estrangeira para o paciente
+  paciente           Paciente @relation(fields: [pacienteId], references: [id]) // Relacionamento com Paciente
+}
+
+model ExameFisico {
+  id            Int        @id @default(autoincrement()) // ID auto-incremental
+  inspecaoGeral String // Inspeção geral do exame físico
+  ar            String // Ausculta Respiratória
+  acv           String // Ausculta Cardiovascular
+  pacienteId    Int? // Chave estrangeira opcional para o paciente
+  paciente      Paciente?  @relation(fields: [pacienteId], references: [id]) // Relacionamento opcional com Paciente
+  consultas     Consulta[] // Relacionamento com Consulta
+}
+
+model EfeitoColateral {
+  id            Int         @id @default(autoincrement()) // ID auto-incremental
+  titulo        String // Título do efeito colateral
+  descricao     String // Descrição do efeito colateral
+  categoria     String // Categoria do efeito colateral
+  porcentagem   Float // Probabilidade do efeito colateral ocorrer
+  svgUrl        String // URL ou caminho do arquivo SVG
+  bulaUrl       String // URL ou caminho do arquivo da bula
+  medicamento   Medicamento @relation(fields: [medicamentoId], references: [id]) // Relacionamento com Medicamento
+  medicamentoId Int
+}
+
+model Consulta {
+  id                  Int                 @id @default(autoincrement()) // ID auto-incremental
+  data                DateTime // Data da consulta
+  status              String // Status da consulta (ex: 'agendada', 'concluída')
+  tipo                TipoConsulta // Tipo de consulta (enum)
+  registroConsulta    String // Registro da consulta
+  pesoAtual           Float // Peso atual do paciente
+  pressao             Float // Pressão do paciente
+  imc                 Float // IMC do paciente
+  altura              Float // Altura do paciente
+  hipoteseDiagnostica String // Hipótese diagnóstica
+  conduta             String // Conduta recomendada
+  exameFisicoId       Int // Chave estrangeira para o Exame Físico
+  exameFisico         ExameFisico         @relation(fields: [exameFisicoId], references: [id]) // Relacionamento com Exame Físico
+  avaliacoesConsulta  AvaliacaoConsulta[] // Relacionamento com Avaliação da Consulta
+  lembretes           Lembrete[]
+  recepcionista       Recepcionista?      @relation(fields: [recepcionistaId], references: [id])
+  medico              Medico?             @relation(fields: [medicoId], references: [id])
+  medicoId            Int?
+  recepcionistaId     Int?
+}
+
+model AvaliacaoConsulta {
+  id            Int      @id @default(autoincrement()) // ID auto-incremental
+  nota          Int // Nota da avaliação
+  comentario    String // Comentário da avaliação
+  dataAvaliacao DateTime @default(now()) // Data da avaliação, padrão como a data atual
+  consultaId    Int // Chave estrangeira para a Consulta
+  consulta      Consulta @relation(fields: [consultaId], references: [id]) // Relacionamento com Consulta
+}
+
+model AtividadeFisica {
+  id                     Int      @id @default(autoincrement()) // ID auto-incremental
+  praticaAtividadeFisica Boolean // Indica se o paciente pratica atividade física
+  tipoTreinamento        String // Tipo de treinamento que o paciente pratica
+  frequenciaTreinos      String // Frequência dos treinos
+  tempoExperiencia       String // Tempo de experiência com atividade física
+  progressoAtividade     String[] // Array que armazena o progresso da atividade física
+  pacienteId             Int // Chave estrangeira para o paciente
+  paciente               Paciente @relation(fields: [pacienteId], references: [id]) // Relacionamento com Paciente
+}
